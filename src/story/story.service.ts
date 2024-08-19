@@ -38,9 +38,17 @@ export class StoryService {
 
   async getUserStories(email: string) {
     try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
       const stories = await this.prisma.story.findMany({
         where: {
           userEmail: email,
+          createdAt: {
+            gte: today,
+            lte: tomorrow,
+          },
         },
       });
       return stories;

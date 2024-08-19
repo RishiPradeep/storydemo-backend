@@ -11,7 +11,7 @@ export class AppService {
   }
 
   async getDetails(email: string) {
-    return await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: {
         email: email,
       },
@@ -19,6 +19,19 @@ export class AppService {
         heatMap: true,
       },
     });
+    const storyCount = await this.prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+      select: {
+        _count: {
+          select: {
+            stories: true,
+          },
+        },
+      },
+    });
+    return { ...user, storyCount: storyCount };
   }
 
   async createUser(createUserDto: CreateUserDto) {
@@ -44,8 +57,6 @@ export class AppService {
   }
 
   async submitStory(email: string) {
-    console.log('called');
-    console.log(email);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today);
@@ -77,32 +88,6 @@ export class AppService {
           },
         },
       });
-
-      if (yesterdayEntry) {
-        // If yesterday's entry exists, update the streak
-        const user = await this.prisma.user.findUnique({
-          where: {
-            email: email,
-          },
-          select: {
-            currentStreak: true,
-            highestStreak: true,
-          },
-        });
-
-        const newStreak = user.currentStreak + 1;
-        const newHighestStreak = Math.max(newStreak, user.highestStreak);
-
-        await this.prisma.user.update({
-          where: {
-            email: email,
-          },
-          data: {
-            currentStreak: newStreak,
-            highestStreak: newHighestStreak,
-          },
-        });
-      }
     } else {
       // If today's entry does not exist, create it and update streaks
       let newStreak = 1;
@@ -131,7 +116,6 @@ export class AppService {
           },
         });
       } else {
-        console.log(email);
         // Reset streak if yesterday's entry does not exist
         await this.prisma.user.update({
           where: {

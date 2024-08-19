@@ -39,5 +39,6 @@ model Story {
   story String @db.VarChar(10000)
   userEmail String
   visibility  String
+  createdAt DateTime @default(now())
   owner User  @relation(fields: [userEmail], references: [email], onDelete: Cascade, onUpdate: Cascade)
 }
